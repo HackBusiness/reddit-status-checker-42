@@ -11,8 +11,11 @@ const RedditLinkChecker = () => {
 
   const checkRedditLink = async () => {
     const response = await fetch(`https://www.reddit.com/api/info.json?url=${redditLink}`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch data from Reddit API');
+    }
     const data = await response.json();
-    return data.data.children.length > 0;
+    return data.data.children.length > 0 && !data.data.children[0].data.removed && !data.data.children[0].data.deleted;
   };
 
   const { data: isActive, isLoading, isError, error } = useQuery({
@@ -51,7 +54,7 @@ const RedditLinkChecker = () => {
           <AlertDescription>
             {isActive
               ? "The Reddit post is active."
-              : "The Reddit post is not active or doesn't exist."}
+              : "The Reddit post is not active, has been removed, or doesn't exist."}
           </AlertDescription>
         </Alert>
       )}

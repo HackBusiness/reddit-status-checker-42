@@ -7,16 +7,31 @@ import { Loader2, X, Check } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import ReactConfetti from 'react-confetti';
+import { useNavigate } from 'react-router-dom';
 import { searchSubreddits, fetchSubredditPosts } from '../utils/redditApi';
 import PostTable from './PostTable';
-import { useAppContext } from '../context/AppContext';
 
 const SubredditExplorer = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubreddits, setSelectedSubreddits] = useState([]);
   const [activeSubreddit, setActiveSubreddit] = useState(null);
   const [postType, setPostType] = useState('hot');
-  const { managedPosts, addManagedPost, subredditPosts, setSubredditPosts } = useAppContext();
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [managedPosts, setManagedPosts] = useState([]);
+  const navigate = useNavigate();
+
+  const searchSubreddits = async (term) => {
+    const response = await fetch(`https://www.reddit.com/subreddits/search.json?q=${term}`);
+    const data = await response.json();
+    return data.data.children.map(child => child.data);
+  };
+
+  const fetchSubredditPosts = async (subreddit) => {
+    const response = await fetch(`https://www.reddit.com/r/${subreddit}/${postType}.json`);
+    const data = await response.json();
+    return data.data.children.map(child => child.data);
+  };
 
   const { data: subreddits, isLoading: isLoadingSubreddits, refetch: refetchSubreddits } = useQuery({
     queryKey: ['subreddits', searchTerm],
@@ -24,15 +39,19 @@ const SubredditExplorer = () => {
     enabled: false,
   });
 
-  const { isLoading: isLoadingPosts, refetch: refetchPosts } = useQuery({
+  const { data: posts, isLoading: isLoadingPosts, refetch: refetchPosts } = useQuery({
     queryKey: ['posts', activeSubreddit, postType],
     queryFn: () => fetchSubredditPosts(activeSubreddit),
     enabled: !!activeSubreddit,
-    onSuccess: (data) => setSubredditPosts(data),
   });
 
   const handlePostCheck = (post) => {
-    addManagedPost(post);
+    setShowConfetti(true);
+    setManagedPosts((prevManagedPosts) => [...prevManagedPosts, post]);
+    setTimeout(() => {
+      setShowConfetti(false);
+      navigate('/managed-posts', { state: { managedPosts: [...managedPosts, post] } });
+    }, 2000);
   };
 
   const handleSearch = () => {
@@ -61,6 +80,7 @@ const SubredditExplorer = () => {
 
   return (
     <div className="p-4">
+      {showConfetti && <ReactConfetti />}
       <h1 className="text-2xl font-bold mb-4">Subreddit Explorer</h1>
       
       <div className="mb-4">
@@ -129,7 +149,61 @@ const SubredditExplorer = () => {
           </div>
           
           {isLoadingPosts && <Loader2 className="animate-spin" />}
-          {subredditPosts && <PostTable posts={subredditPosts} handlePostCheck={handlePostCheck} />}
+          {posts && (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Subreddit</TableHead>
+                  <TableHead>Author</TableHead>
+                  <TableHead>Score</TableHead>
+                  <TableHead>Comments</TableHead>
+                  <TableHead>Created</TableHead>
+                  <TableHead>Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {posts.map((post) => (
+                  <TableRow key={post.id}>
+                    <TableCell>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <a
+                              href={`https://reddit.com${post.permalink}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline"
+                            >
+                              {post.title}
+                            </a>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{post.title}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </TableCell>
+                    <TableCell>{post.subreddit}</TableCell>
+                    <TableCell>{post.author}</TableCell>
+                    <TableCell>{post.score}</TableCell>
+                    <TableCell>{post.num_comments}</TableCell>
+                    <TableCell>{new Date(post.created_utc * 1000).toLocaleString()}</TableCell>
+                    <TableCell>
+                      <Button
+                        onClick={() => handlePostCheck(post)}
+                        size="sm"
+                        className="bg-green-500 hover:bg-green-600 text-white"
+                      >
+                        <Check className="mr-2 h-4 w-4" />
+                        Mark as Checked
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </div>
       )}
     </div>

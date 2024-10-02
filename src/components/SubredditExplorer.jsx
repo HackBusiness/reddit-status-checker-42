@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, X } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const SubredditExplorer = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubreddits, setSelectedSubreddits] = useState([]);
   const [activeSubreddit, setActiveSubreddit] = useState(null);
+  const [postType, setPostType] = useState('hot');
 
   const searchSubreddits = async (term) => {
     const response = await fetch(`https://www.reddit.com/subreddits/search.json?q=${term}`);
@@ -17,7 +20,7 @@ const SubredditExplorer = () => {
   };
 
   const fetchSubredditPosts = async (subreddit) => {
-    const response = await fetch(`https://www.reddit.com/r/${subreddit}/hot.json`);
+    const response = await fetch(`https://www.reddit.com/r/${subreddit}/${postType}.json`);
     const data = await response.json();
     return data.data.children.map(child => child.data);
   };
@@ -28,8 +31,8 @@ const SubredditExplorer = () => {
     enabled: false,
   });
 
-  const { data: posts, isLoading: isLoadingPosts } = useQuery({
-    queryKey: ['posts', activeSubreddit],
+  const { data: posts, isLoading: isLoadingPosts, refetch: refetchPosts } = useQuery({
+    queryKey: ['posts', activeSubreddit, postType],
     queryFn: () => fetchSubredditPosts(activeSubreddit),
     enabled: !!activeSubreddit,
   });
@@ -53,36 +56,40 @@ const SubredditExplorer = () => {
     }
   };
 
+  const handlePostTypeChange = (value) => {
+    setPostType(value);
+    refetchPosts();
+  };
+
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Subreddit Explorer</h1>
-      <div className="relative mb-4">
-        <Input
-          type="text"
-          placeholder="Search subreddits"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pr-20"
-        />
-        <Button 
-          onClick={handleSearch} 
-          className="absolute right-0 top-0 rounded-l-none"
-        >
-          Search
-        </Button>
-        {isLoadingSubreddits && <Loader2 className="animate-spin absolute right-24 top-2" />}
+      <div className="mb-4">
+        <div className="flex gap-2">
+          <Input
+            type="text"
+            placeholder="Search subreddits"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="flex-grow"
+          />
+          <Button onClick={handleSearch}>Search</Button>
+        </div>
+        {isLoadingSubreddits && <Loader2 className="animate-spin mt-2" />}
         {subreddits && searchTerm && (
-          <div className="absolute z-10 w-full mt-1 bg-white border rounded-md shadow-lg max-h-60 overflow-auto">
-            {subreddits.map((subreddit) => (
-              <div 
-                key={subreddit.id} 
-                className="p-2 hover:bg-gray-100 cursor-pointer"
-                onClick={() => handleSubredditSelect(subreddit.display_name)}
-              >
-                {subreddit.display_name}
-              </div>
-            ))}
-          </div>
+          <Card className="mt-2">
+            <CardContent className="p-2">
+              {subreddits.map((subreddit) => (
+                <div 
+                  key={subreddit.id} 
+                  className="p-2 hover:bg-gray-100 cursor-pointer"
+                  onClick={() => handleSubredditSelect(subreddit.display_name)}
+                >
+                  {subreddit.display_name}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         )}
       </div>
       
@@ -107,29 +114,53 @@ const SubredditExplorer = () => {
       
       {activeSubreddit && (
         <div>
-          <h2 className="text-xl font-semibold mb-4">Posts in r/{activeSubreddit}</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Posts in r/{activeSubreddit}</h2>
+            <Select value={postType} onValueChange={handlePostTypeChange}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select post type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="hot">Hot</SelectItem>
+                <SelectItem value="new">New</SelectItem>
+                <SelectItem value="top">Top</SelectItem>
+                <SelectItem value="rising">Rising</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           {isLoadingPosts && <Loader2 className="animate-spin" />}
           {posts && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {posts.map((post) => (
-                <Card key={post.id} className="h-full flex flex-col">
-                  <CardHeader>
-                    <CardTitle className="text-base line-clamp-2">{post.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent className="flex-grow">
-                    <p className="text-sm line-clamp-3">{post.selftext}</p>
-                    <a 
-                      href={`https://reddit.com${post.permalink}`} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="text-blue-600 hover:underline text-sm mt-2 block"
-                    >
-                      Read more
-                    </a>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Title</TableHead>
+                  <TableHead>Author</TableHead>
+                  <TableHead>Score</TableHead>
+                  <TableHead>Comments</TableHead>
+                  <TableHead>Created</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {posts.map((post) => (
+                  <TableRow key={post.id}>
+                    <TableCell>
+                      <a 
+                        href={`https://reddit.com${post.permalink}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-blue-600 hover:underline"
+                      >
+                        {post.title}
+                      </a>
+                    </TableCell>
+                    <TableCell>{post.author}</TableCell>
+                    <TableCell>{post.score}</TableCell>
+                    <TableCell>{post.num_comments}</TableCell>
+                    <TableCell>{new Date(post.created_utc * 1000).toLocaleString()}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </div>
       )}

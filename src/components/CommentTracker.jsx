@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw, Trash2 } from 'lucide-react';
 import CommentTable from './CommentTable';
 import AddCommentDialog from './AddCommentDialog';
+import { toast } from 'sonner';
 
 const CommentTracker = () => {
   const [subredditFilter, setSubredditFilter] = useState('');
@@ -60,8 +61,15 @@ const CommentTracker = () => {
     enabled: false,
   });
 
-  const handleRefresh = () => {
-    refetch();
+  const handleRefresh = async () => {
+    toast.promise(
+      refetch(),
+      {
+        loading: 'Refreshing comments...',
+        success: 'Comments refreshed successfully!',
+        error: 'Failed to refresh comments',
+      }
+    );
   };
 
   const handleAddComment = async (newCommentUrl) => {

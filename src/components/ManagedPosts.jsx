@@ -1,17 +1,14 @@
-import React, { useEffect } from 'react';
+import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useAppContext } from '../context/AppContext';
 
 const ManagedPosts = () => {
-  const { managedPosts, pageViews, incrementPageView } = useAppContext();
-
-  useEffect(() => {
-    incrementPageView('managedPosts');
-  }, []);
+  const location = useLocation();
+  const managedPosts = location.state?.managedPosts || [];
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Managed Posts (Views: {pageViews.managedPosts || 0})</h1>
+      <h1 className="text-2xl font-bold mb-4">Managed Posts</h1>
       {managedPosts.length > 0 ? (
         <Table>
           <TableHeader>

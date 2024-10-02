@@ -1,8 +1,7 @@
 import React from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import PostTable from './PostTable';
 
-const ManagedPosts = ({ managedPosts }) => {
+const ManagedPosts = ({ managedPosts = [] }) => {
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Managed Posts</h1>

@@ -7,7 +7,7 @@ import { Loader2, X, Check } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import Confetti from 'react-confetti';
+import ReactConfetti from 'react-confetti';
 import { useNavigate } from 'react-router-dom';
 
 const SubredditExplorer = () => {
@@ -83,7 +83,7 @@ const SubredditExplorer = () => {
 
   return (
     <div className="p-4">
-      {showConfetti && <Confetti />}
+      {showConfetti && <ReactConfetti />}
       <h1 className="text-2xl font-bold mb-4">Subreddit Explorer</h1>
       
       <div className="mb-4">
@@ -150,6 +150,7 @@ const SubredditExplorer = () => {
               </SelectContent>
             </Select>
           </div>
+          
           {isLoadingPosts && <Loader2 className="animate-spin" />}
           {posts && (
             <Table>
@@ -171,10 +172,10 @@ const SubredditExplorer = () => {
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <a 
-                              href={`https://reddit.com${post.permalink}`} 
-                              target="_blank" 
-                              rel="noopener noreferrer" 
+                            <a
+                              href={`https://reddit.com${post.permalink}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
                               className="text-blue-600 hover:underline"
                             >
                               {shortenTitle(post.title)}

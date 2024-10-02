@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, X } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tooltip } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const SubredditExplorer = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -102,6 +102,7 @@ const SubredditExplorer = () => {
             </CardContent>
           </Card>
         )}
+      </div>
       
       <div className="flex flex-wrap gap-2 mb-4">
         {selectedSubreddits.map((subreddit) => (
@@ -156,16 +157,23 @@ const SubredditExplorer = () => {
                 {posts.map((post) => (
                   <TableRow key={post.id}>
                     <TableCell>
-                      <Tooltip content={post.title}>
-                        <a 
-                          href={`https://reddit.com${post.permalink}`} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="text-blue-600 hover:underline"
-                        >
-                          {shortenTitle(post.title)}
-                        </a>
-                      </Tooltip>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <a 
+                              href={`https://reddit.com${post.permalink}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="text-blue-600 hover:underline"
+                            >
+                              {shortenTitle(post.title)}
+                            </a>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{post.title}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </TableCell>
                     <TableCell>{post.author}</TableCell>
                     <TableCell>{post.author_flair_text || 'N/A'}</TableCell>

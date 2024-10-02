@@ -4,12 +4,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 
 const ManagedPosts = () => {
   const location = useLocation();
-  const { post } = location.state || {};
+  const managedPosts = location.state?.managedPosts || [];
 
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Managed Posts</h1>
-      {post ? (
+      {managedPosts.length > 0 ? (
         <Table>
           <TableHeader>
             <TableRow>
@@ -22,14 +22,16 @@ const ManagedPosts = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            <TableRow>
-              <TableCell>{post.title}</TableCell>
-              <TableCell>{post.subreddit}</TableCell>
-              <TableCell>{post.author}</TableCell>
-              <TableCell>{post.score}</TableCell>
-              <TableCell>{post.num_comments}</TableCell>
-              <TableCell>{new Date(post.created_utc * 1000).toLocaleString()}</TableCell>
-            </TableRow>
+            {managedPosts.map((post) => (
+              <TableRow key={post.id}>
+                <TableCell>{post.title}</TableCell>
+                <TableCell>{post.subreddit}</TableCell>
+                <TableCell>{post.author}</TableCell>
+                <TableCell>{post.score}</TableCell>
+                <TableCell>{post.num_comments}</TableCell>
+                <TableCell>{new Date(post.created_utc * 1000).toLocaleString()}</TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       ) : (

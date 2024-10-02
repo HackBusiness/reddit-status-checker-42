@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import ReactConfetti from 'react-confetti';
 import { useNavigate } from 'react-router-dom';
+import { searchSubreddits, fetchSubredditPosts } from '../utils/redditApi';
+import PostTable from './PostTable';
 
 const SubredditExplorer = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -16,6 +18,7 @@ const SubredditExplorer = () => {
   const [activeSubreddit, setActiveSubreddit] = useState(null);
   const [postType, setPostType] = useState('hot');
   const [showConfetti, setShowConfetti] = useState(false);
+  const [managedPosts, setManagedPosts] = useState([]);
   const navigate = useNavigate();
 
   const searchSubreddits = async (term) => {
@@ -42,15 +45,12 @@ const SubredditExplorer = () => {
     enabled: !!activeSubreddit,
   });
 
-  const shortenTitle = (title, maxLength = 30) => {
-    if (title.length <= maxLength) return title;
-    return title.substring(0, maxLength - 3) + '...';
-  };
-
-  const handlePostCheck = () => {
+  const handlePostCheck = (post) => {
     setShowConfetti(true);
+    setManagedPosts((prevManagedPosts) => [...prevManagedPosts, post]);
     setTimeout(() => {
       setShowConfetti(false);
+      navigate('/managed-posts', { state: { managedPosts: [...managedPosts, post] } });
     }, 2000);
   };
 
@@ -175,7 +175,7 @@ const SubredditExplorer = () => {
                               rel="noopener noreferrer"
                               className="text-blue-600 hover:underline"
                             >
-                              {shortenTitle(post.title)}
+                              {post.title}
                             </a>
                           </TooltipTrigger>
                           <TooltipContent>
@@ -191,7 +191,7 @@ const SubredditExplorer = () => {
                     <TableCell>{new Date(post.created_utc * 1000).toLocaleString()}</TableCell>
                     <TableCell>
                       <Button
-                        onClick={handlePostCheck}
+                        onClick={() => handlePostCheck(post)}
                         size="sm"
                         className="bg-green-500 hover:bg-green-600 text-white"
                       >

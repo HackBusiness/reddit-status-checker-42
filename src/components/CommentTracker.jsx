@@ -16,9 +16,25 @@ const CommentTracker = () => {
   });
   const [isAddCommentOpen, setIsAddCommentOpen] = useState(false);
 
+  const parseRedditUrl = (url) => {
+    const match = url.match(/\/r\/([^/]+)\/comments\/([^/]+)(?:\/[^/]+\/([^/]+))?/);
+    if (match) {
+      return {
+        subreddit: match[1],
+        postId: match[2],
+        commentId: match[3] || match[2],
+      };
+    }
+    return null;
+  };
+
   const fetchCommentStatus = async (comment) => {
     try {
-      const response = await fetch(`https://www.reddit.com${comment.url}.json`);
+      const parsedUrl = parseRedditUrl(comment.url);
+      if (!parsedUrl) throw new Error('Invalid Reddit URL');
+
+      const apiUrl = `https://www.reddit.com/r/${parsedUrl.subreddit}/comments/${parsedUrl.postId}/_/${parsedUrl.commentId}.json`;
+      const response = await fetch(apiUrl);
       const data = await response.json();
       const commentData = data[1].data.children[0].data;
       
@@ -30,7 +46,12 @@ const CommentTracker = () => {
       };
     } catch (error) {
       console.error('Error fetching comment status:', error);
-      return comment;
+      return {
+        ...comment,
+        upvotes: 0,
+        organicTraffic: 0,
+        affiliateStatus: 'Error',
+      };
     }
   };
 
@@ -52,23 +73,33 @@ const CommentTracker = () => {
   };
 
   const handleAddComment = async () => {
+    const parsedUrl = parseRedditUrl(newComment.url);
+    if (!parsedUrl) {
+      alert('Invalid Reddit URL. Please enter a valid comment URL.');
+      return;
+    }
+
     const currentDate = new Date().toISOString().split('T')[0];
     const newCommentEntry = {
-      id: comments.length + 1,
+      id: Date.now(),
       date: currentDate,
-      subreddit: newComment.subreddit,
+      subreddit: parsedUrl.subreddit,
       author: newComment.author,
       url: newComment.url,
       organicTraffic: '0',
       upvotes: 0,
       affiliateStatus: 'Checking...',
     };
+
     setComments(prevComments => [...prevComments, newCommentEntry]);
     setNewComment({ subreddit: '', author: '', url: '' });
     setIsAddCommentOpen(false);
 
     // Update the status of the newly added comment
-    await updateCommentStatus(newCommentEntry.id);
+    const updatedComment = await fetchCommentStatus(newCommentEntry);
+    setComments(prevComments => prevComments.map(comment => 
+      comment.id === updatedComment.id ? updatedComment : comment
+    ));
   };
 
   const filteredComments = comments.filter(comment =>
@@ -103,17 +134,12 @@ const CommentTracker = () => {
               </DialogHeader>
               <div className="space-y-4">
                 <Input
-                  placeholder="Subreddit"
-                  value={newComment.subreddit}
-                  onChange={(e) => setNewComment({ ...newComment, subreddit: e.target.value })}
-                />
-                <Input
                   placeholder="Author"
                   value={newComment.author}
                   onChange={(e) => setNewComment({ ...newComment, author: e.target.value })}
                 />
                 <Input
-                  placeholder="URL"
+                  placeholder="Comment URL"
                   value={newComment.url}
                   onChange={(e) => setNewComment({ ...newComment, url: e.target.value })}
                 />

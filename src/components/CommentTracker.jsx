@@ -4,17 +4,15 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ArrowUp, RefreshCw, Plus } from 'lucide-react';
+import { ArrowUp, RefreshCw, Plus, Trash2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const CommentTracker = () => {
   const [subredditFilter, setSubredditFilter] = useState('');
   const [comments, setComments] = useState([]);
-  const [newComment, setNewComment] = useState({
-    subreddit: '',
-    author: '',
-    url: '',
-  });
+  const [newCommentUrl, setNewCommentUrl] = useState('');
   const [isAddCommentOpen, setIsAddCommentOpen] = useState(false);
+  const [selectedComments, setSelectedComments] = useState([]);
 
   const parseRedditUrl = (url) => {
     const match = url.match(/\/r\/([^/]+)\/comments\/([^/]+)(?:\/[^/]+\/([^/]+))?/);
@@ -73,7 +71,7 @@ const CommentTracker = () => {
   };
 
   const handleAddComment = async () => {
-    const parsedUrl = parseRedditUrl(newComment.url);
+    const parsedUrl = parseRedditUrl(newCommentUrl);
     if (!parsedUrl) {
       alert('Invalid Reddit URL. Please enter a valid comment URL.');
       return;
@@ -84,15 +82,14 @@ const CommentTracker = () => {
       id: Date.now(),
       date: currentDate,
       subreddit: parsedUrl.subreddit,
-      author: newComment.author,
-      url: newComment.url,
+      url: newCommentUrl,
       organicTraffic: '0',
       upvotes: 0,
       affiliateStatus: 'Checking...',
     };
 
     setComments(prevComments => [...prevComments, newCommentEntry]);
-    setNewComment({ subreddit: '', author: '', url: '' });
+    setNewCommentUrl('');
     setIsAddCommentOpen(false);
 
     // Update the status of the newly added comment
@@ -100,6 +97,24 @@ const CommentTracker = () => {
     setComments(prevComments => prevComments.map(comment => 
       comment.id === updatedComment.id ? updatedComment : comment
     ));
+  };
+
+  const handleRemoveComment = (commentId) => {
+    setComments(prevComments => prevComments.filter(comment => comment.id !== commentId));
+    setSelectedComments(prevSelected => prevSelected.filter(id => id !== commentId));
+  };
+
+  const handleRemoveSelectedComments = () => {
+    setComments(prevComments => prevComments.filter(comment => !selectedComments.includes(comment.id)));
+    setSelectedComments([]);
+  };
+
+  const handleSelectComment = (commentId) => {
+    setSelectedComments(prevSelected => 
+      prevSelected.includes(commentId)
+        ? prevSelected.filter(id => id !== commentId)
+        : [...prevSelected, commentId]
+    );
   };
 
   const filteredComments = comments.filter(comment =>
@@ -134,39 +149,46 @@ const CommentTracker = () => {
               </DialogHeader>
               <div className="space-y-4">
                 <Input
-                  placeholder="Author"
-                  value={newComment.author}
-                  onChange={(e) => setNewComment({ ...newComment, author: e.target.value })}
-                />
-                <Input
                   placeholder="Comment URL"
-                  value={newComment.url}
-                  onChange={(e) => setNewComment({ ...newComment, url: e.target.value })}
+                  value={newCommentUrl}
+                  onChange={(e) => setNewCommentUrl(e.target.value)}
                 />
                 <Button onClick={handleAddComment}>Add Comment</Button>
               </div>
             </DialogContent>
           </Dialog>
+          {selectedComments.length > 0 && (
+            <Button onClick={handleRemoveSelectedComments} variant="destructive">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Remove Selected
+            </Button>
+          )}
         </div>
       </div>
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-[50px]">Select</TableHead>
             <TableHead>Date</TableHead>
             <TableHead>Subreddit</TableHead>
-            <TableHead>Author</TableHead>
             <TableHead>URL</TableHead>
             <TableHead>Organic Traffic</TableHead>
             <TableHead>Upvotes</TableHead>
             <TableHead>Affiliate Status</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {filteredComments.map((comment) => (
             <TableRow key={comment.id}>
+              <TableCell>
+                <Checkbox
+                  checked={selectedComments.includes(comment.id)}
+                  onCheckedChange={() => handleSelectComment(comment.id)}
+                />
+              </TableCell>
               <TableCell>{comment.date}</TableCell>
               <TableCell>{comment.subreddit}</TableCell>
-              <TableCell>{comment.author}</TableCell>
               <TableCell>
                 <a href={comment.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                   Link
@@ -178,6 +200,11 @@ const CommentTracker = () => {
                 {comment.upvotes}
               </TableCell>
               <TableCell>{comment.affiliateStatus}</TableCell>
+              <TableCell>
+                <Button onClick={() => handleRemoveComment(comment.id)} variant="destructive" size="sm">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>

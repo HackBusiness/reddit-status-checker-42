@@ -1,17 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ArrowUp, RefreshCw, Plus, Trash2 } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
+import { RefreshCw, Trash2 } from 'lucide-react';
+import CommentTable from './CommentTable';
+import AddCommentDialog from './AddCommentDialog';
 
 const CommentTracker = () => {
   const [subredditFilter, setSubredditFilter] = useState('');
   const [comments, setComments] = useState([]);
-  const [newCommentUrl, setNewCommentUrl] = useState('');
-  const [isAddCommentOpen, setIsAddCommentOpen] = useState(false);
   const [selectedComments, setSelectedComments] = useState([]);
 
   const parseRedditUrl = (url) => {
@@ -26,7 +23,7 @@ const CommentTracker = () => {
     return null;
   };
 
-  const fetchCommentStatus = async (comment) => {
+  const fetchCommentStatus = useCallback(async (comment) => {
     try {
       const parsedUrl = parseRedditUrl(comment.url);
       if (!parsedUrl) throw new Error('Invalid Reddit URL');
@@ -51,26 +48,23 @@ const CommentTracker = () => {
         affiliateStatus: 'Error',
       };
     }
+  }, []);
+
+  const { refetch } = useQuery({
+    queryKey: ['comments'],
+    queryFn: async () => {
+      const updatedComments = await Promise.all(comments.map(fetchCommentStatus));
+      setComments(updatedComments);
+      return updatedComments;
+    },
+    enabled: false,
+  });
+
+  const handleRefresh = () => {
+    refetch();
   };
 
-  const updateCommentStatus = async (commentId) => {
-    const updatedComments = await Promise.all(
-      comments.map(async (comment) => {
-        if (comment.id === commentId) {
-          return await fetchCommentStatus(comment);
-        }
-        return comment;
-      })
-    );
-    setComments(updatedComments);
-  };
-
-  const handleRefresh = async () => {
-    const updatedComments = await Promise.all(comments.map(fetchCommentStatus));
-    setComments(updatedComments);
-  };
-
-  const handleAddComment = async () => {
+  const handleAddComment = async (newCommentUrl) => {
     const parsedUrl = parseRedditUrl(newCommentUrl);
     if (!parsedUrl) {
       alert('Invalid Reddit URL. Please enter a valid comment URL.');
@@ -88,15 +82,8 @@ const CommentTracker = () => {
       affiliateStatus: 'Checking...',
     };
 
-    setComments(prevComments => [...prevComments, newCommentEntry]);
-    setNewCommentUrl('');
-    setIsAddCommentOpen(false);
-
-    // Update the status of the newly added comment
     const updatedComment = await fetchCommentStatus(newCommentEntry);
-    setComments(prevComments => prevComments.map(comment => 
-      comment.id === updatedComment.id ? updatedComment : comment
-    ));
+    setComments(prevComments => [...prevComments, updatedComment]);
   };
 
   const handleRemoveComment = (commentId) => {
@@ -136,27 +123,7 @@ const CommentTracker = () => {
             <RefreshCw className="mr-2 h-4 w-4" />
             Refresh
           </Button>
-          <Dialog open={isAddCommentOpen} onOpenChange={setIsAddCommentOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Comment
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add New Comment</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <Input
-                  placeholder="Comment URL"
-                  value={newCommentUrl}
-                  onChange={(e) => setNewCommentUrl(e.target.value)}
-                />
-                <Button onClick={handleAddComment}>Add Comment</Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <AddCommentDialog onAddComment={handleAddComment} />
           {selectedComments.length > 0 && (
             <Button onClick={handleRemoveSelectedComments} variant="destructive">
               <Trash2 className="mr-2 h-4 w-4" />
@@ -165,50 +132,12 @@ const CommentTracker = () => {
           )}
         </div>
       </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[50px]">Select</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Subreddit</TableHead>
-            <TableHead>URL</TableHead>
-            <TableHead>Organic Traffic</TableHead>
-            <TableHead>Upvotes</TableHead>
-            <TableHead>Affiliate Status</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredComments.map((comment) => (
-            <TableRow key={comment.id}>
-              <TableCell>
-                <Checkbox
-                  checked={selectedComments.includes(comment.id)}
-                  onCheckedChange={() => handleSelectComment(comment.id)}
-                />
-              </TableCell>
-              <TableCell>{comment.date}</TableCell>
-              <TableCell>{comment.subreddit}</TableCell>
-              <TableCell>
-                <a href={comment.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                  Link
-                </a>
-              </TableCell>
-              <TableCell>{comment.organicTraffic} Views</TableCell>
-              <TableCell className="flex items-center">
-                <ArrowUp className="mr-1 h-4 w-4 text-green-500" />
-                {comment.upvotes}
-              </TableCell>
-              <TableCell>{comment.affiliateStatus}</TableCell>
-              <TableCell>
-                <Button onClick={() => handleRemoveComment(comment.id)} variant="destructive" size="sm">
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <CommentTable
+        comments={filteredComments}
+        selectedComments={selectedComments}
+        onSelectComment={handleSelectComment}
+        onRemoveComment={handleRemoveComment}
+      />
     </div>
   );
 };

@@ -44,7 +44,7 @@ const CommentTracker = () => {
       upvotes: 0,
       affiliateStatus: 'Not Active',
     };
-    setComments([...comments, newCommentEntry]);
+    setComments(prevComments => [...prevComments, newCommentEntry]);
     setNewComment({ subreddit: '', author: '', url: '' });
     setIsAddCommentOpen(false);
   };

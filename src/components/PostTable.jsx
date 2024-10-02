@@ -20,7 +20,7 @@ const PostTable = ({ posts, handlePostCheck }) => {
           <TableHead>Score</TableHead>
           <TableHead>Comments</TableHead>
           <TableHead>Created</TableHead>
-          {handlePostCheck && <TableHead>Action</TableHead>}
+          <TableHead>Action</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -50,14 +50,16 @@ const PostTable = ({ posts, handlePostCheck }) => {
             <TableCell>{post.score}</TableCell>
             <TableCell>{post.num_comments}</TableCell>
             <TableCell>{new Date(post.created_utc * 1000).toLocaleString()}</TableCell>
-            {handlePostCheck && (
-              <TableCell>
-                <Button onClick={() => handlePostCheck(post)} size="sm" className="bg-green-500 hover:bg-green-600 text-white">
-                  <Check className="mr-2 h-4 w-4" />
-                  Mark as Checked
-                </Button>
-              </TableCell>
-            )}
+            <TableCell>
+              <Button
+                onClick={() => handlePostCheck(post)}
+                size="sm"
+                className="bg-green-500 hover:bg-green-600 text-white"
+              >
+                <Check className="mr-2 h-4 w-4" />
+                Mark as Checked
+              </Button>
+            </TableCell>
           </TableRow>
         ))}
       </TableBody>

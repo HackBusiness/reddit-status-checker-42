@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -7,19 +8,7 @@ import { ArrowUp, RefreshCw, Plus } from 'lucide-react';
 
 const CommentTracker = () => {
   const [subredditFilter, setSubredditFilter] = useState('');
-  const [comments, setComments] = useState([
-    {
-      id: 1,
-      date: '2023-03-15',
-      subreddit: 'AskReddit',
-      author: 'user123',
-      url: 'https://www.reddit.com/r/AskReddit/comments/example1',
-      organicTraffic: '2.3K',
-      upvotes: 150,
-      affiliateStatus: 'Active',
-    },
-    // Add more mock data as needed
-  ]);
+  const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState({
     subreddit: '',
     author: '',
@@ -27,12 +16,42 @@ const CommentTracker = () => {
   });
   const [isAddCommentOpen, setIsAddCommentOpen] = useState(false);
 
-  const handleRefresh = () => {
-    // Implement refresh logic here
-    console.log('Refreshing data...');
+  const fetchCommentStatus = async (comment) => {
+    try {
+      const response = await fetch(`https://www.reddit.com${comment.url}.json`);
+      const data = await response.json();
+      const commentData = data[1].data.children[0].data;
+      
+      return {
+        ...comment,
+        upvotes: commentData.ups,
+        organicTraffic: commentData.score,
+        affiliateStatus: commentData.removed_by_category ? 'Removed' : 'Active',
+      };
+    } catch (error) {
+      console.error('Error fetching comment status:', error);
+      return comment;
+    }
   };
 
-  const handleAddComment = () => {
+  const updateCommentStatus = async (commentId) => {
+    const updatedComments = await Promise.all(
+      comments.map(async (comment) => {
+        if (comment.id === commentId) {
+          return await fetchCommentStatus(comment);
+        }
+        return comment;
+      })
+    );
+    setComments(updatedComments);
+  };
+
+  const handleRefresh = async () => {
+    const updatedComments = await Promise.all(comments.map(fetchCommentStatus));
+    setComments(updatedComments);
+  };
+
+  const handleAddComment = async () => {
     const currentDate = new Date().toISOString().split('T')[0];
     const newCommentEntry = {
       id: comments.length + 1,
@@ -42,11 +61,14 @@ const CommentTracker = () => {
       url: newComment.url,
       organicTraffic: '0',
       upvotes: 0,
-      affiliateStatus: 'Not Active',
+      affiliateStatus: 'Checking...',
     };
     setComments(prevComments => [...prevComments, newCommentEntry]);
     setNewComment({ subreddit: '', author: '', url: '' });
     setIsAddCommentOpen(false);
+
+    // Update the status of the newly added comment
+    await updateCommentStatus(newCommentEntry.id);
   };
 
   const filteredComments = comments.filter(comment =>

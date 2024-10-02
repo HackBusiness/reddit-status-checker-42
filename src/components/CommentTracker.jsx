@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ArrowUp, RefreshCw, Plus } from 'lucide-react';
 
 const CommentTracker = () => {
@@ -19,6 +20,12 @@ const CommentTracker = () => {
     },
     // Add more mock data as needed
   ]);
+  const [newComment, setNewComment] = useState({
+    subreddit: '',
+    author: '',
+    url: '',
+  });
+  const [isAddCommentOpen, setIsAddCommentOpen] = useState(false);
 
   const handleRefresh = () => {
     // Implement refresh logic here
@@ -26,8 +33,20 @@ const CommentTracker = () => {
   };
 
   const handleAddComment = () => {
-    // Implement add comment logic here
-    console.log('Adding new comment...');
+    const currentDate = new Date().toISOString().split('T')[0];
+    const newCommentEntry = {
+      id: comments.length + 1,
+      date: currentDate,
+      subreddit: newComment.subreddit,
+      author: newComment.author,
+      url: newComment.url,
+      organicTraffic: '0',
+      upvotes: 0,
+      affiliateStatus: 'Not Active',
+    };
+    setComments([...comments, newCommentEntry]);
+    setNewComment({ subreddit: '', author: '', url: '' });
+    setIsAddCommentOpen(false);
   };
 
   const filteredComments = comments.filter(comment =>
@@ -49,10 +68,37 @@ const CommentTracker = () => {
             <RefreshCw className="mr-2 h-4 w-4" />
             Refresh
           </Button>
-          <Button onClick={handleAddComment}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Comment
-          </Button>
+          <Dialog open={isAddCommentOpen} onOpenChange={setIsAddCommentOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Comment
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add New Comment</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <Input
+                  placeholder="Subreddit"
+                  value={newComment.subreddit}
+                  onChange={(e) => setNewComment({ ...newComment, subreddit: e.target.value })}
+                />
+                <Input
+                  placeholder="Author"
+                  value={newComment.author}
+                  onChange={(e) => setNewComment({ ...newComment, author: e.target.value })}
+                />
+                <Input
+                  placeholder="URL"
+                  value={newComment.url}
+                  onChange={(e) => setNewComment({ ...newComment, url: e.target.value })}
+                />
+                <Button onClick={handleAddComment}>Add Comment</Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
       <Table>

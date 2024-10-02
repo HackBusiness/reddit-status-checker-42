@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Input, Button, Card, CardContent } from '@/components/ui/';
-import { Loader2, X, Check } from 'lucide-react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import ReactConfetti from 'react-confetti';
-import { useNavigate } from 'react-router-dom';
-import { searchSubreddits, fetchSubredditPosts } from '../utils/redditApi';
-import PostTable from './PostTable';
+import { useQuery } from "@tanstack/react-query";
+import { Input, Button, Card, CardContent } from "@/components/ui/";
+import { Loader2, X, Check } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import ReactConfetti from "react-confetti";
+import { useNavigate } from "react-router-dom";
+import { searchSubreddits, fetchSubredditPosts } from "../utils/redditApi";
+import PostTable from "./PostTable";
 
 const SubredditExplorer = () => {
   const [searchTerm, setSearchTerm] = useState('');

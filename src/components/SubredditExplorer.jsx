@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { searchSubreddits, fetchSubredditPosts } from '../utils/redditApi';
 import { useAppContext } from '../context/AppContext';
@@ -25,7 +23,7 @@ const SubredditExplorer = () => {
 
   const { data: posts, isLoading: isLoadingPosts, refetch: refetchPosts } = useQuery({
     queryKey: ['posts', activeSubreddit, postType],
-    queryFn: () => fetchSubredditPosts(activeSubreddit),
+    queryFn: () => fetchSubredditPosts(activeSubreddit, postType),
     enabled: !!activeSubreddit,
   });
 
@@ -72,7 +70,7 @@ const SubredditExplorer = () => {
           />
           <Button onClick={handleSearch}>Search</Button>
         </div>
-        {isLoadingSubreddits && <Loader2 className="animate-spin mt-2" />}
+        {isLoadingSubreddits && <p>Loading subreddits...</p>}
         {subreddits && searchTerm && (
           <SubredditList 
             subreddits={subreddits} 
@@ -116,7 +114,7 @@ const SubredditExplorer = () => {
             </Select>
           </div>
           
-          {isLoadingPosts && <Loader2 className="animate-spin" />}
+          {isLoadingPosts && <p>Loading posts...</p>}
           {posts && (
             <PostTable posts={posts} handlePostCheck={handlePostCheck} />
           )}

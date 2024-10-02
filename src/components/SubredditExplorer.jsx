@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Input, Button, Card, CardContent } from "@/components/ui/";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, X, Check } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";

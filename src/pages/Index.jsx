@@ -1,12 +1,18 @@
 import React from 'react';
-import RedditLinkChecker from '../components/RedditLinkChecker';
+import Header from '../components/Header';
+import ProfileSection from '../components/ProfileSection';
+import CommentTracker from '../components/CommentTracker';
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold text-center text-gray-900 mb-8">Reddit Link Checker</h1>
-        <RedditLinkChecker />
+    <div className="min-h-screen bg-gray-100">
+      <Header />
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-start mb-8">
+          <h1 className="text-3xl font-bold">Track Comments in One Place</h1>
+          <ProfileSection />
+        </div>
+        <CommentTracker />
       </div>
     </div>
   );

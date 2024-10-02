@@ -6,7 +6,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Loader2, X } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tooltip } from '@/components/ui/tooltip';
 
 const SubredditExplorer = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -62,19 +61,9 @@ const SubredditExplorer = () => {
     refetchPosts();
   };
 
-  const shortenTitle = (title, maxLength = 50) => {
-    if (title.length <= maxLength) return title;
-    return title.substring(0, maxLength - 3) + '...';
-  };
-
-  const formatDate = (timestamp) => {
-    return new Date(timestamp * 1000).toLocaleString();
-  };
-
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Subreddit Explorer</h1>
-      
       <div className="mb-4">
         <div className="flex gap-2">
           <Input
@@ -102,6 +91,7 @@ const SubredditExplorer = () => {
             </CardContent>
           </Card>
         )}
+      </div>
       
       <div className="flex flex-wrap gap-2 mb-4">
         {selectedSubreddits.map((subreddit) => (
@@ -145,8 +135,6 @@ const SubredditExplorer = () => {
                 <TableRow>
                   <TableHead>Title</TableHead>
                   <TableHead>Author</TableHead>
-                  <TableHead>Karma</TableHead>
-                  <TableHead>Account Age</TableHead>
                   <TableHead>Score</TableHead>
                   <TableHead>Comments</TableHead>
                   <TableHead>Created</TableHead>
@@ -156,23 +144,19 @@ const SubredditExplorer = () => {
                 {posts.map((post) => (
                   <TableRow key={post.id}>
                     <TableCell>
-                      <Tooltip content={post.title}>
-                        <a 
-                          href={`https://reddit.com${post.permalink}`} 
-                          target="_blank" 
-                          rel="noopener noreferrer" 
-                          className="text-blue-600 hover:underline"
-                        >
-                          {shortenTitle(post.title)}
-                        </a>
-                      </Tooltip>
+                      <a 
+                        href={`https://reddit.com${post.permalink}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-blue-600 hover:underline"
+                      >
+                        {post.title}
+                      </a>
                     </TableCell>
                     <TableCell>{post.author}</TableCell>
-                    <TableCell>{post.author_flair_text || 'N/A'}</TableCell>
-                    <TableCell>{post.author_fullname ? `u/${post.author_fullname.substring(3)}` : 'N/A'}</TableCell>
                     <TableCell>{post.score}</TableCell>
                     <TableCell>{post.num_comments}</TableCell>
-                    <TableCell>{formatDate(post.created_utc)}</TableCell>
+                    <TableCell>{new Date(post.created_utc * 1000).toLocaleString()}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

@@ -3,15 +3,20 @@ import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, X } from 'lucide-react';
+import { Loader2, X, Check } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import Confetti from 'react-confetti';
+import { useNavigate } from 'react-router-dom';
 
 const SubredditExplorer = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubreddits, setSelectedSubreddits] = useState([]);
   const [activeSubreddit, setActiveSubreddit] = useState(null);
   const [postType, setPostType] = useState('hot');
+  const [showConfetti, setShowConfetti] = useState(false);
+  const navigate = useNavigate();
 
   const searchSubreddits = async (term) => {
     const response = await fetch(`https://www.reddit.com/subreddits/search.json?q=${term}`);
@@ -36,6 +41,21 @@ const SubredditExplorer = () => {
     queryFn: () => fetchSubredditPosts(activeSubreddit),
     enabled: !!activeSubreddit,
   });
+
+  const shortenTitle = (title, maxLength = 30) => {
+    if (title.length <= maxLength) return title;
+    return title.substring(0, maxLength - 3) + '...';
+  };
+
+  const handlePostCheck = (post) => {
+    // Add post to managed posts (you'll need to implement this logic)
+    // For now, we'll just show confetti and navigate
+    setShowConfetti(true);
+    setTimeout(() => {
+      setShowConfetti(false);
+      navigate('/managed-posts', { state: { post } });
+    }, 2000);
+  };
 
   const handleSearch = () => {
     refetchSubreddits();
@@ -63,7 +83,9 @@ const SubredditExplorer = () => {
 
   return (
     <div className="p-4">
+      {showConfetti && <Confetti />}
       <h1 className="text-2xl font-bold mb-4">Subreddit Explorer</h1>
+      
       <div className="mb-4">
         <div className="flex gap-2">
           <Input
@@ -134,29 +156,47 @@ const SubredditExplorer = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Title</TableHead>
+                  <TableHead>Subreddit</TableHead>
                   <TableHead>Author</TableHead>
                   <TableHead>Score</TableHead>
                   <TableHead>Comments</TableHead>
                   <TableHead>Created</TableHead>
+                  <TableHead>Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {posts.map((post) => (
                   <TableRow key={post.id}>
                     <TableCell>
-                      <a 
-                        href={`https://reddit.com${post.permalink}`} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="text-blue-600 hover:underline"
-                      >
-                        {post.title}
-                      </a>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <a 
+                              href={`https://reddit.com${post.permalink}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="text-blue-600 hover:underline"
+                            >
+                              {shortenTitle(post.title)}
+                            </a>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{post.title}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </TableCell>
+                    <TableCell>{post.subreddit}</TableCell>
                     <TableCell>{post.author}</TableCell>
                     <TableCell>{post.score}</TableCell>
                     <TableCell>{post.num_comments}</TableCell>
                     <TableCell>{new Date(post.created_utc * 1000).toLocaleString()}</TableCell>
+                    <TableCell>
+                      <Button onClick={() => handlePostCheck(post)} size="sm">
+                        <Check className="mr-2 h-4 w-4" />
+                        Post Checked
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

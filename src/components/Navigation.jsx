@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Search } from 'lucide-react';
+import { Home, Search, Bookmark } from 'lucide-react';
 
 const Navigation = () => {
   const location = useLocation();
@@ -25,6 +25,12 @@ const Navigation = () => {
           <Link to="/subreddit-explorer" className={`flex items-center p-2 rounded-lg ${isActive('/subreddit-explorer')}`}>
             <Search className="mr-2 h-5 w-5" />
             Subreddit Explorer
+          </Link>
+        </li>
+        <li>
+          <Link to="/managed-posts" className={`flex items-center p-2 rounded-lg ${isActive('/managed-posts')}`}>
+            <Bookmark className="mr-2 h-5 w-5" />
+            Managed Posts
           </Link>
         </li>
       </ul>

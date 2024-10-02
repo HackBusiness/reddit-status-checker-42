@@ -47,13 +47,10 @@ const SubredditExplorer = () => {
     return title.substring(0, maxLength - 3) + '...';
   };
 
-  const handlePostCheck = (post) => {
-    // Add post to managed posts (you'll need to implement this logic)
-    // For now, we'll just show confetti and navigate
+  const handlePostCheck = () => {
     setShowConfetti(true);
     setTimeout(() => {
       setShowConfetti(false);
-      navigate('/managed-posts', { state: { post } });
     }, 2000);
   };
 
@@ -193,9 +190,13 @@ const SubredditExplorer = () => {
                     <TableCell>{post.num_comments}</TableCell>
                     <TableCell>{new Date(post.created_utc * 1000).toLocaleString()}</TableCell>
                     <TableCell>
-                      <Button onClick={() => handlePostCheck(post)} size="sm">
+                      <Button
+                        onClick={handlePostCheck}
+                        size="sm"
+                        className="bg-green-500 hover:bg-green-600 text-white"
+                      >
                         <Check className="mr-2 h-4 w-4" />
-                        Post Checked
+                        Mark as Checked
                       </Button>
                     </TableCell>
                   </TableRow>

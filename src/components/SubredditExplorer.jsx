@@ -1,19 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Loader2, X, Check } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import ReactConfetti from 'react-confetti';
+import { useNavigate } from 'react-router-dom';
 import { searchSubreddits, fetchSubredditPosts } from '../utils/redditApi';
-import { useAppContext } from '../context/AppContext';
-import SubredditList from './SubredditList';
 import PostTable from './PostTable';
+import { useAppContext } from '../context/AppContext';
 
 const SubredditExplorer = () => {
+  const { subredditPosts, setSubredditPosts, pageViews, incrementPageView } = useAppContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubreddits, setSelectedSubreddits] = useState([]);
   const [activeSubreddit, setActiveSubreddit] = useState(null);
   const [postType, setPostType] = useState('hot');
-  const { addManagedPost } = useAppContext();
+  const [showConfetti, setShowConfetti] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    incrementPageView('subredditExplorer');
+  }, []);
 
   const { data: subreddits, isLoading: isLoadingSubreddits, refetch: refetchSubreddits } = useQuery({
     queryKey: ['subreddits', searchTerm],
@@ -23,12 +32,17 @@ const SubredditExplorer = () => {
 
   const { data: posts, isLoading: isLoadingPosts, refetch: refetchPosts } = useQuery({
     queryKey: ['posts', activeSubreddit, postType],
-    queryFn: () => fetchSubredditPosts(activeSubreddit, postType),
+    queryFn: () => fetchSubredditPosts(activeSubreddit),
     enabled: !!activeSubreddit,
   });
 
   const handlePostCheck = (post) => {
-    addManagedPost(post);
+    setShowConfetti(true);
+    setSubredditPosts((prevPosts) => [...prevPosts, post]);
+    setTimeout(() => {
+      setShowConfetti(false);
+      navigate('/managed-posts');
+    }, 2000);
   };
 
   const handleSearch = () => {
@@ -57,7 +71,8 @@ const SubredditExplorer = () => {
 
   return (
     <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">Subreddit Explorer</h1>
+      {showConfetti && <ReactConfetti />}
+      <h1 className="text-2xl font-bold mb-4">Subreddit Explorer (Views: {pageViews.subredditExplorer || 0})</h1>
       
       <div className="mb-4">
         <div className="flex gap-2">
@@ -70,12 +85,21 @@ const SubredditExplorer = () => {
           />
           <Button onClick={handleSearch}>Search</Button>
         </div>
-        {isLoadingSubreddits && <p>Loading subreddits...</p>}
+        {isLoadingSubreddits && <Loader2 className="animate-spin mt-2" />}
         {subreddits && searchTerm && (
-          <SubredditList 
-            subreddits={subreddits} 
-            onSubredditSelect={handleSubredditSelect} 
-          />
+          <Card className="mt-2">
+            <CardContent className="p-2">
+              {subreddits.map((subreddit) => (
+                <div 
+                  key={subreddit.id} 
+                  className="p-2 hover:bg-gray-100 cursor-pointer"
+                  onClick={() => handleSubredditSelect(subreddit.display_name)}
+                >
+                  {subreddit.display_name}
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         )}
       </div>
       
@@ -90,9 +114,10 @@ const SubredditExplorer = () => {
             <span onClick={() => setActiveSubreddit(subreddit)} className="cursor-pointer">
               {subreddit}
             </span>
-            <button onClick={() => handleRemoveSubreddit(subreddit)} className="text-xs">
-              &times;
-            </button>
+            <X 
+              className="h-4 w-4 cursor-pointer" 
+              onClick={() => handleRemoveSubreddit(subreddit)}
+            />
           </div>
         ))}
       </div>
@@ -114,10 +139,8 @@ const SubredditExplorer = () => {
             </Select>
           </div>
           
-          {isLoadingPosts && <p>Loading posts...</p>}
-          {posts && (
-            <PostTable posts={posts} handlePostCheck={handlePostCheck} />
-          )}
+          {isLoadingPosts && <Loader2 className="animate-spin" />}
+          {posts && <PostTable posts={posts} handlePostCheck={handlePostCheck} />}
         </div>
       )}
     </div>

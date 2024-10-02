@@ -1,28 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, X, Check } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import ReactConfetti from 'react-confetti';
-import { useNavigate } from 'react-router-dom';
 import { searchSubreddits, fetchSubredditPosts } from '../utils/redditApi';
-import PostTable from './PostTable';
 import { useAppContext } from '../context/AppContext';
+import SubredditList from './SubredditList';
+import PostTable from './PostTable';
 
 const SubredditExplorer = () => {
-  const { subredditPosts, setSubredditPosts, pageViews, incrementPageView } = useAppContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubreddits, setSelectedSubreddits] = useState([]);
   const [activeSubreddit, setActiveSubreddit] = useState(null);
   const [postType, setPostType] = useState('hot');
-  const [showConfetti, setShowConfetti] = useState(false);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    incrementPageView('subredditExplorer');
-  }, []);
+  const { addManagedPost } = useAppContext();
 
   const { data: subreddits, isLoading: isLoadingSubreddits, refetch: refetchSubreddits } = useQuery({
     queryKey: ['subreddits', searchTerm],
@@ -37,12 +30,7 @@ const SubredditExplorer = () => {
   });
 
   const handlePostCheck = (post) => {
-    setShowConfetti(true);
-    setSubredditPosts((prevPosts) => [...prevPosts, post]);
-    setTimeout(() => {
-      setShowConfetti(false);
-      navigate('/managed-posts');
-    }, 2000);
+    addManagedPost(post);
   };
 
   const handleSearch = () => {
@@ -71,8 +59,7 @@ const SubredditExplorer = () => {
 
   return (
     <div className="p-4">
-      {showConfetti && <ReactConfetti />}
-      <h1 className="text-2xl font-bold mb-4">Subreddit Explorer (Views: {pageViews.subredditExplorer || 0})</h1>
+      <h1 className="text-2xl font-bold mb-4">Subreddit Explorer</h1>
       
       <div className="mb-4">
         <div className="flex gap-2">
@@ -87,19 +74,10 @@ const SubredditExplorer = () => {
         </div>
         {isLoadingSubreddits && <Loader2 className="animate-spin mt-2" />}
         {subreddits && searchTerm && (
-          <Card className="mt-2">
-            <CardContent className="p-2">
-              {subreddits.map((subreddit) => (
-                <div 
-                  key={subreddit.id} 
-                  className="p-2 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => handleSubredditSelect(subreddit.display_name)}
-                >
-                  {subreddit.display_name}
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+          <SubredditList 
+            subreddits={subreddits} 
+            onSubredditSelect={handleSubredditSelect} 
+          />
         )}
       </div>
       
@@ -114,10 +92,9 @@ const SubredditExplorer = () => {
             <span onClick={() => setActiveSubreddit(subreddit)} className="cursor-pointer">
               {subreddit}
             </span>
-            <X 
-              className="h-4 w-4 cursor-pointer" 
-              onClick={() => handleRemoveSubreddit(subreddit)}
-            />
+            <button onClick={() => handleRemoveSubreddit(subreddit)} className="text-xs">
+              &times;
+            </button>
           </div>
         ))}
       </div>
@@ -140,7 +117,9 @@ const SubredditExplorer = () => {
           </div>
           
           {isLoadingPosts && <Loader2 className="animate-spin" />}
-          {posts && <PostTable posts={posts} handlePostCheck={handlePostCheck} />}
+          {posts && (
+            <PostTable posts={posts} handlePostCheck={handlePostCheck} />
+          )}
         </div>
       )}
     </div>

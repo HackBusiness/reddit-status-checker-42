@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -6,12 +6,18 @@ import { RefreshCw, Trash2 } from 'lucide-react';
 import CommentTable from './CommentTable';
 import AddCommentDialog from './AddCommentDialog';
 import { toast } from 'sonner';
-import { useAppContext } from '../context/AppContext';
 
 const CommentTracker = () => {
   const [subredditFilter, setSubredditFilter] = useState('');
+  const [comments, setComments] = useState(() => {
+    const storedComments = localStorage.getItem('comments');
+    return storedComments ? JSON.parse(storedComments) : [];
+  });
   const [selectedComments, setSelectedComments] = useState([]);
-  const { trackedComments, addCommentToTracker } = useAppContext();
+
+  useEffect(() => {
+    localStorage.setItem('comments', JSON.stringify(comments));
+  }, [comments]);
 
   const parseRedditUrl = (url) => {
     const match = url.match(/\/r\/([^/]+)\/comments\/([^/]+)(?:\/[^/]+\/([^/]+))?/);
@@ -92,18 +98,16 @@ const CommentTracker = () => {
     };
 
     const updatedComment = await fetchCommentStatus(newCommentEntry);
-    addCommentToTracker(updatedComment);
+    setComments(prevComments => [...prevComments, updatedComment]);
   };
 
   const handleRemoveComment = (commentId) => {
-    // Update this to use the context
-    addCommentToTracker(trackedComments.filter(comment => comment.id !== commentId));
+    setComments(prevComments => prevComments.filter(comment => comment.id !== commentId));
     setSelectedComments(prevSelected => prevSelected.filter(id => id !== commentId));
   };
 
   const handleRemoveSelectedComments = () => {
-    // Update this to use the context
-    addCommentToTracker(trackedComments.filter(comment => !selectedComments.includes(comment.id)));
+    setComments(prevComments => prevComments.filter(comment => !selectedComments.includes(comment.id)));
     setSelectedComments([]);
   };
 
@@ -115,7 +119,7 @@ const CommentTracker = () => {
     );
   };
 
-  const filteredComments = trackedComments.filter(comment =>
+  const filteredComments = comments.filter(comment =>
     comment.subreddit.toLowerCase().includes(subredditFilter.toLowerCase())
   );
 

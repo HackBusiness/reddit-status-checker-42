@@ -16,18 +16,6 @@ const SubredditExplorer = () => {
   const [postType, setPostType] = useState('hot');
   const { addManagedPost } = useAppContext();
 
-  const searchSubreddits = async (term) => {
-    const response = await fetch(`https://www.reddit.com/subreddits/search.json?q=${term}`);
-    const data = await response.json();
-    return data.data.children.map(child => child.data);
-  };
-
-  const fetchSubredditPosts = async (subreddit) => {
-    const response = await fetch(`https://www.reddit.com/r/${subreddit}/${postType}.json`);
-    const data = await response.json();
-    return data.data.children.map(child => child.data);
-  };
-
   const { data: subreddits, isLoading: isLoadingSubreddits, refetch: refetchSubreddits } = useQuery({
     queryKey: ['subreddits', searchTerm],
     queryFn: () => searchSubreddits(searchTerm),
@@ -139,7 +127,7 @@ const SubredditExplorer = () => {
           
           {isLoadingPosts && <Loader2 className="animate-spin" />}
           {posts && (
-            <PostTable posts={posts} handlePostCheck={handlePostCheck} />
+            <PostTable posts={posts} handlePostCheck={addManagedPost} />
           )}
         </div>
       )}

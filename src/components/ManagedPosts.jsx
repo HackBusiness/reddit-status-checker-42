@@ -1,9 +1,24 @@
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
 import { useAppContext } from '../context/AppContext';
+import { Link } from 'react-router-dom';
 
 const ManagedPosts = () => {
-  const { managedPosts } = useAppContext();
+  const { managedPosts, addCommentToTracker } = useAppContext();
+
+  const handleTrackComment = (post) => {
+    const commentUrl = `https://reddit.com${post.permalink}`;
+    addCommentToTracker({
+      id: Date.now(),
+      date: new Date().toISOString().split('T')[0],
+      subreddit: post.subreddit,
+      url: commentUrl,
+      organicTraffic: '0',
+      upvotes: post.score,
+      affiliateStatus: 'Active',
+    });
+  };
 
   return (
     <div className="p-4">
@@ -18,6 +33,7 @@ const ManagedPosts = () => {
               <TableHead>Score</TableHead>
               <TableHead>Comments</TableHead>
               <TableHead>Created</TableHead>
+              <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -38,6 +54,11 @@ const ManagedPosts = () => {
                 <TableCell>{post.score}</TableCell>
                 <TableCell>{post.num_comments}</TableCell>
                 <TableCell>{new Date(post.created_utc * 1000).toLocaleString()}</TableCell>
+                <TableCell>
+                  <Button onClick={() => handleTrackComment(post)} size="sm">
+                    Track Comment
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -45,6 +66,11 @@ const ManagedPosts = () => {
       ) : (
         <p>No managed posts yet.</p>
       )}
+      <div className="mt-4">
+        <Link to="/" className="text-blue-600 hover:underline">
+          Go to Comment Tracker
+        </Link>
+      </div>
     </div>
   );
 };

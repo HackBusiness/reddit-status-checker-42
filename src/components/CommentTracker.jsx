@@ -25,15 +25,6 @@ const CommentTracker = () => {
     return null;
   };
 
-  const extractTitleFromUrl = (url) => {
-    const parts = url.split('/');
-    const lastPart = parts[parts.length - 2]; // Get the second to last part
-    return lastPart
-      .split('_')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
-
   const fetchCommentStatus = useCallback(async (comment) => {
     try {
       const parsedUrl = parseRedditUrl(comment.url);
@@ -46,8 +37,8 @@ const CommentTracker = () => {
       
       return {
         ...comment,
-        postTitle: extractTitleFromUrl(comment.url),
         upvotes: commentData.ups,
+        organicTraffic: commentData.score,
         affiliateStatus: commentData.removed_by_category ? 'Removed' : 'Active',
         isFromManagedPost: isCommentFromManagedPost(comment.url),
       };
@@ -55,8 +46,8 @@ const CommentTracker = () => {
       console.error('Error fetching comment status:', error);
       return {
         ...comment,
-        postTitle: extractTitleFromUrl(comment.url),
         upvotes: 0,
+        organicTraffic: 0,
         affiliateStatus: 'Error',
         isFromManagedPost: isCommentFromManagedPost(comment.url),
       };
@@ -96,6 +87,7 @@ const CommentTracker = () => {
       date: currentDate,
       subreddit: parsedUrl.subreddit,
       url: newCommentUrl,
+      organicTraffic: '0',
       upvotes: 0,
       affiliateStatus: 'Checking...',
     };

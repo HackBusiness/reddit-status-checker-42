@@ -5,6 +5,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowUp, Trash2, Star } from 'lucide-react';
 
 const CommentTable = ({ comments, selectedComments, onSelectComment, onRemoveComment }) => {
+  const shortenTitle = (title, maxLength = 30) => {
+    if (title.length <= maxLength) return title;
+    return title.substring(0, maxLength - 3) + '...';
+  };
+
   return (
     <Table>
       <TableHeader>
@@ -12,8 +17,7 @@ const CommentTable = ({ comments, selectedComments, onSelectComment, onRemoveCom
           <TableHead className="w-[50px]">Select</TableHead>
           <TableHead>Date</TableHead>
           <TableHead>Subreddit</TableHead>
-          <TableHead>URL</TableHead>
-          <TableHead>Organic Traffic</TableHead>
+          <TableHead>Post Title</TableHead>
           <TableHead>Upvotes</TableHead>
           <TableHead>Affiliate Status</TableHead>
           <TableHead>Actions</TableHead>
@@ -32,13 +36,12 @@ const CommentTable = ({ comments, selectedComments, onSelectComment, onRemoveCom
             <TableCell>{comment.subreddit}</TableCell>
             <TableCell>
               <a href={comment.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                Link
+                {shortenTitle(comment.postTitle || 'Untitled Post')}
               </a>
               {comment.isFromManagedPost && (
                 <Star className="inline-block ml-2 h-4 w-4 text-yellow-500" />
               )}
             </TableCell>
-            <TableCell>{comment.organicTraffic} Views</TableCell>
             <TableCell className="flex items-center">
               <ArrowUp className="mr-1 h-4 w-4 text-green-500" />
               {comment.upvotes}

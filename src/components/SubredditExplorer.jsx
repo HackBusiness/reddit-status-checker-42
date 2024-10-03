@@ -1,13 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, X, Check } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Loader2 } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import PostTable from './PostTable';
+import { searchSubreddits, fetchSubredditPosts } from '../utils/redditApi';
 
 const SubredditExplorer = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,18 +30,6 @@ const SubredditExplorer = () => {
     }
   }, [activeSubreddit]);
 
-  const searchSubreddits = async (term) => {
-    const response = await fetch(`https://www.reddit.com/subreddits/search.json?q=${term}`);
-    const data = await response.json();
-    return data.data.children.map(child => child.data);
-  };
-
-  const fetchSubredditPosts = async (subreddit) => {
-    const response = await fetch(`https://www.reddit.com/r/${subreddit}/${postType}.json`);
-    const data = await response.json();
-    return data.data.children.map(child => child.data);
-  };
-
   const { data: subreddits, isLoading: isLoadingSubreddits, refetch: refetchSubreddits } = useQuery({
     queryKey: ['subreddits', searchTerm],
     queryFn: () => searchSubreddits(searchTerm),
@@ -51,11 +38,12 @@ const SubredditExplorer = () => {
 
   const { data: posts, isLoading: isLoadingPosts, refetch: refetchPosts } = useQuery({
     queryKey: ['posts', activeSubreddit, postType],
-    queryFn: () => fetchSubredditPosts(activeSubreddit),
+    queryFn: () => fetchSubredditPosts(activeSubreddit, postType),
     enabled: !!activeSubreddit,
   });
 
   const handlePostCheck = (post) => {
+    console.log('Adding post to managed posts:', post); // Add this line for debugging
     addManagedPost(post);
   };
 

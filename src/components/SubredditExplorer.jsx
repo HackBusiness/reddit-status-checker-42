@@ -1,35 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2, X } from 'lucide-react';
-import { useAppContext } from '../context/AppContext';
-import PostTable from './PostTable';
-import { searchSubreddits, fetchSubredditPosts } from '../utils/redditApi';
 import { Card, CardContent } from '@/components/ui/card';
+import { Loader2, X, Check } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { searchSubreddits, fetchSubredditPosts } from '../utils/redditApi';
+import PostTable from './PostTable';
 
 const SubredditExplorer = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSubreddits, setSelectedSubreddits] = useState(() => {
-    const saved = localStorage.getItem('selectedSubreddits');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [activeSubreddit, setActiveSubreddit] = useState(() => {
-    return localStorage.getItem('activeSubreddit') || null;
-  });
+  const [selectedSubreddits, setSelectedSubreddits] = useState([]);
+  const [activeSubreddit, setActiveSubreddit] = useState(null);
   const [postType, setPostType] = useState('hot');
-  const { addManagedPost } = useAppContext();
+  const [managedPosts, setManagedPosts] = useState([]);
 
-  useEffect(() => {
-    localStorage.setItem('selectedSubreddits', JSON.stringify(selectedSubreddits));
-  }, [selectedSubreddits]);
+  const searchSubreddits = async (term) => {
+    const response = await fetch(`https://www.reddit.com/subreddits/search.json?q=${term}`);
+    const data = await response.json();
+    return data.data.children.map(child => child.data);
+  };
 
-  useEffect(() => {
-    if (activeSubreddit) {
-      localStorage.setItem('activeSubreddit', activeSubreddit);
-    }
-  }, [activeSubreddit]);
+  const fetchSubredditPosts = async (subreddit) => {
+    const response = await fetch(`https://www.reddit.com/r/${subreddit}/${postType}.json`);
+    const data = await response.json();
+    return data.data.children.map(child => child.data);
+  };
 
   const { data: subreddits, isLoading: isLoadingSubreddits, refetch: refetchSubreddits } = useQuery({
     queryKey: ['subreddits', searchTerm],
@@ -39,13 +37,17 @@ const SubredditExplorer = () => {
 
   const { data: posts, isLoading: isLoadingPosts, refetch: refetchPosts } = useQuery({
     queryKey: ['posts', activeSubreddit, postType],
-    queryFn: () => fetchSubredditPosts(activeSubreddit, postType),
+    queryFn: () => fetchSubredditPosts(activeSubreddit),
     enabled: !!activeSubreddit,
   });
 
   const handlePostCheck = (post) => {
-    console.log('Adding post to managed posts:', post);
-    addManagedPost(post);
+    setManagedPosts((prevManagedPosts) => {
+      if (!prevManagedPosts.some(p => p.id === post.id)) {
+        return [...prevManagedPosts, post];
+      }
+      return prevManagedPosts;
+    });
   };
 
   const handleSearch = () => {

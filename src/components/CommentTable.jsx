@@ -2,7 +2,7 @@ import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowUp, Trash2 } from 'lucide-react';
+import { ArrowUp, Trash2, Star } from 'lucide-react';
 
 const CommentTable = ({ comments, selectedComments, onSelectComment, onRemoveComment }) => {
   return (
@@ -16,6 +16,7 @@ const CommentTable = ({ comments, selectedComments, onSelectComment, onRemoveCom
           <TableHead>Organic Traffic</TableHead>
           <TableHead>Upvotes</TableHead>
           <TableHead>Affiliate Status</TableHead>
+          <TableHead>Managed</TableHead>
           <TableHead>Actions</TableHead>
         </TableRow>
       </TableHeader>
@@ -41,6 +42,9 @@ const CommentTable = ({ comments, selectedComments, onSelectComment, onRemoveCom
               {comment.upvotes}
             </TableCell>
             <TableCell>{comment.affiliateStatus}</TableCell>
+            <TableCell>
+              {comment.postId && <Star className="h-4 w-4 text-yellow-500" />}
+            </TableCell>
             <TableCell>
               <Button onClick={() => onRemoveComment(comment.id)} variant="destructive" size="sm">
                 <Trash2 className="h-4 w-4" />

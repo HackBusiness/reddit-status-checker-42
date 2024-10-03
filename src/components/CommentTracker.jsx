@@ -6,18 +6,12 @@ import { RefreshCw, Trash2 } from 'lucide-react';
 import CommentTable from './CommentTable';
 import AddCommentDialog from './AddCommentDialog';
 import { toast } from 'sonner';
+import { useAppContext } from '../context/AppContext';
 
 const CommentTracker = () => {
   const [subredditFilter, setSubredditFilter] = useState('');
-  const [comments, setComments] = useState(() => {
-    const storedComments = localStorage.getItem('comments');
-    return storedComments ? JSON.parse(storedComments) : [];
-  });
+  const { trackedComments, removeTrackedComment } = useAppContext();
   const [selectedComments, setSelectedComments] = useState([]);
-
-  useEffect(() => {
-    localStorage.setItem('comments', JSON.stringify(comments));
-  }, [comments]);
 
   const parseRedditUrl = (url) => {
     const match = url.match(/\/r\/([^/]+)\/comments\/([^/]+)(?:\/[^/]+\/([^/]+))?/);
@@ -61,8 +55,7 @@ const CommentTracker = () => {
   const { refetch } = useQuery({
     queryKey: ['comments'],
     queryFn: async () => {
-      const updatedComments = await Promise.all(comments.map(fetchCommentStatus));
-      setComments(updatedComments);
+      const updatedComments = await Promise.all(trackedComments.map(fetchCommentStatus));
       return updatedComments;
     },
     enabled: false,
@@ -79,35 +72,13 @@ const CommentTracker = () => {
     );
   };
 
-  const handleAddComment = async (newCommentUrl) => {
-    const parsedUrl = parseRedditUrl(newCommentUrl);
-    if (!parsedUrl) {
-      alert('Invalid Reddit URL. Please enter a valid comment URL.');
-      return;
-    }
-
-    const currentDate = new Date().toISOString().split('T')[0];
-    const newCommentEntry = {
-      id: Date.now(),
-      date: currentDate,
-      subreddit: parsedUrl.subreddit,
-      url: newCommentUrl,
-      organicTraffic: '0',
-      upvotes: 0,
-      affiliateStatus: 'Checking...',
-    };
-
-    const updatedComment = await fetchCommentStatus(newCommentEntry);
-    setComments(prevComments => [...prevComments, updatedComment]);
-  };
-
   const handleRemoveComment = (commentId) => {
-    setComments(prevComments => prevComments.filter(comment => comment.id !== commentId));
+    removeTrackedComment(commentId);
     setSelectedComments(prevSelected => prevSelected.filter(id => id !== commentId));
   };
 
   const handleRemoveSelectedComments = () => {
-    setComments(prevComments => prevComments.filter(comment => !selectedComments.includes(comment.id)));
+    selectedComments.forEach(commentId => removeTrackedComment(commentId));
     setSelectedComments([]);
   };
 
@@ -119,7 +90,7 @@ const CommentTracker = () => {
     );
   };
 
-  const filteredComments = comments.filter(comment =>
+  const filteredComments = trackedComments.filter(comment =>
     comment.subreddit.toLowerCase().includes(subredditFilter.toLowerCase())
   );
 
@@ -138,7 +109,7 @@ const CommentTracker = () => {
             <RefreshCw className="mr-2 h-4 w-4" />
             Refresh
           </Button>
-          <AddCommentDialog onAddComment={handleAddComment} />
+          <AddCommentDialog />
           {selectedComments.length > 0 && (
             <Button onClick={handleRemoveSelectedComments} variant="destructive">
               <Trash2 className="mr-2 h-4 w-4" />

@@ -1,10 +1,9 @@
 import React from 'react';
-import { useLocation } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useAppContext } from '../context/AppContext';
 
 const ManagedPosts = () => {
-  const location = useLocation();
-  const managedPosts = location.state?.managedPosts || [];
+  const { managedPosts } = useAppContext();
 
   return (
     <div className="p-4">
@@ -24,7 +23,16 @@ const ManagedPosts = () => {
           <TableBody>
             {managedPosts.map((post) => (
               <TableRow key={post.id}>
-                <TableCell>{post.title}</TableCell>
+                <TableCell>
+                  <a
+                    href={`https://reddit.com${post.permalink}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline"
+                  >
+                    {post.title}
+                  </a>
+                </TableCell>
                 <TableCell>{post.subreddit}</TableCell>
                 <TableCell>{post.author}</TableCell>
                 <TableCell>{post.score}</TableCell>

@@ -3,10 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, X, Check } from 'lucide-react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Loader2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAppContext } from '../context/AppContext';
 import PostTable from './PostTable';
 
@@ -20,7 +18,7 @@ const SubredditExplorer = () => {
     return localStorage.getItem('activeSubreddit') || null;
   });
   const [postType, setPostType] = useState('hot');
-  const { addManagedPost } = useAppContext();
+  const { addManagedPost, managedPosts } = useAppContext();
 
   useEffect(() => {
     localStorage.setItem('selectedSubreddits', JSON.stringify(selectedSubreddits));
@@ -128,10 +126,12 @@ const SubredditExplorer = () => {
             <span onClick={() => setActiveSubreddit(subreddit)} className="cursor-pointer">
               {subreddit}
             </span>
-            <X 
-              className="h-4 w-4 cursor-pointer" 
+            <button 
+              className="text-xs"
               onClick={() => handleRemoveSubreddit(subreddit)}
-            />
+            >
+              ×
+            </button>
           </div>
         ))}
       </div>
@@ -155,7 +155,11 @@ const SubredditExplorer = () => {
           
           {isLoadingPosts && <Loader2 className="animate-spin" />}
           {posts && (
-            <PostTable posts={posts} handlePostCheck={handlePostCheck} />
+            <PostTable 
+              posts={posts} 
+              handlePostCheck={handlePostCheck} 
+              managedPosts={managedPosts}
+            />
           )}
         </div>
       )}

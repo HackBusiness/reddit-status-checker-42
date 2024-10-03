@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -9,15 +9,8 @@ import { toast } from 'sonner';
 
 const CommentTracker = () => {
   const [subredditFilter, setSubredditFilter] = useState('');
-  const [comments, setComments] = useState(() => {
-    const storedComments = localStorage.getItem('comments');
-    return storedComments ? JSON.parse(storedComments) : [];
-  });
+  const [comments, setComments] = useState([]);
   const [selectedComments, setSelectedComments] = useState([]);
-
-  useEffect(() => {
-    localStorage.setItem('comments', JSON.stringify(comments));
-  }, [comments]);
 
   const parseRedditUrl = (url) => {
     const match = url.match(/\/r\/([^/]+)\/comments\/([^/]+)(?:\/[^/]+\/([^/]+))?/);

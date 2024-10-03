@@ -4,14 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Check } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-const PostTable = ({ posts, handlePostCheck, managedPosts }) => {
+const PostTable = ({ posts, handlePostCheck }) => {
   const shortenTitle = (title, maxLength = 30) => {
     if (title.length <= maxLength) return title;
     return title.substring(0, maxLength - 3) + '...';
-  };
-
-  const isPostChecked = (postId) => {
-    return managedPosts.some(managedPost => managedPost.id === postId);
   };
 
   return (
@@ -19,6 +15,7 @@ const PostTable = ({ posts, handlePostCheck, managedPosts }) => {
       <TableHeader>
         <TableRow>
           <TableHead>Title</TableHead>
+          <TableHead>Subreddit</TableHead>
           <TableHead>Author</TableHead>
           <TableHead>Score</TableHead>
           <TableHead>Comments</TableHead>
@@ -48,6 +45,7 @@ const PostTable = ({ posts, handlePostCheck, managedPosts }) => {
                 </Tooltip>
               </TooltipProvider>
             </TableCell>
+            <TableCell>{post.subreddit}</TableCell>
             <TableCell>{post.author}</TableCell>
             <TableCell>{post.score}</TableCell>
             <TableCell>{post.num_comments}</TableCell>
@@ -56,15 +54,10 @@ const PostTable = ({ posts, handlePostCheck, managedPosts }) => {
               <Button
                 onClick={() => handlePostCheck(post)}
                 size="sm"
-                className={`${
-                  isPostChecked(post.id)
-                    ? 'bg-green-500 hover:bg-green-600'
-                    : 'bg-blue-500 hover:bg-blue-600'
-                } text-white`}
-                disabled={isPostChecked(post.id)}
+                className="bg-green-500 hover:bg-green-600 text-white"
               >
                 <Check className="mr-2 h-4 w-4" />
-                {isPostChecked(post.id) ? 'Checked' : 'Mark as Checked'}
+                Mark as Checked
               </Button>
             </TableCell>
           </TableRow>

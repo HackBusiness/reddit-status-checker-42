@@ -3,18 +3,31 @@ import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, X } from 'lucide-react';
+import { Loader2, X, Check } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { searchSubreddits, fetchSubredditPosts } from '../utils/redditApi';
 import PostTable from './PostTable';
-import { useAppContext } from '../context/AppContext';
 
 const SubredditExplorer = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubreddits, setSelectedSubreddits] = useState([]);
   const [activeSubreddit, setActiveSubreddit] = useState(null);
   const [postType, setPostType] = useState('hot');
-  const { managedPosts, addManagedPost } = useAppContext();
+  const [managedPosts, setManagedPosts] = useState([]);
+
+  const searchSubreddits = async (term) => {
+    const response = await fetch(`https://www.reddit.com/subreddits/search.json?q=${term}`);
+    const data = await response.json();
+    return data.data.children.map(child => child.data);
+  };
+
+  const fetchSubredditPosts = async (subreddit) => {
+    const response = await fetch(`https://www.reddit.com/r/${subreddit}/${postType}.json`);
+    const data = await response.json();
+    return data.data.children.map(child => child.data);
+  };
 
   const { data: subreddits, isLoading: isLoadingSubreddits, refetch: refetchSubreddits } = useQuery({
     queryKey: ['subreddits', searchTerm],
@@ -29,7 +42,12 @@ const SubredditExplorer = () => {
   });
 
   const handlePostCheck = (post) => {
-    addManagedPost(post);
+    setManagedPosts((prevManagedPosts) => {
+      if (!prevManagedPosts.some(p => p.id === post.id)) {
+        return [...prevManagedPosts, post];
+      }
+      return prevManagedPosts;
+    });
   };
 
   const handleSearch = () => {
@@ -127,11 +145,7 @@ const SubredditExplorer = () => {
           
           {isLoadingPosts && <Loader2 className="animate-spin" />}
           {posts && (
-            <PostTable 
-              posts={posts} 
-              handlePostCheck={handlePostCheck} 
-              managedPosts={managedPosts}
-            />
+            <PostTable posts={posts} handlePostCheck={handlePostCheck} />
           )}
         </div>
       )}

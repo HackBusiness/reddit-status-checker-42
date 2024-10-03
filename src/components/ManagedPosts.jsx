@@ -1,10 +1,9 @@
 import React from 'react';
-import { useLocation } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useAppContext } from '../context/AppContext';
 
 const ManagedPosts = () => {
-  const location = useLocation();
-  const managedPosts = location.state?.managedPosts || [];
+  const { managedPosts } = useAppContext();
 
   return (
     <div className="p-4">

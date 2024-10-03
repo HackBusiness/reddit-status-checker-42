@@ -3,19 +3,18 @@ import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Loader2, X, Check } from 'lucide-react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Loader2, X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { searchSubreddits, fetchSubredditPosts } from '../utils/redditApi';
 import PostTable from './PostTable';
+import { useAppContext } from '../context/AppContext';
 
 const SubredditExplorer = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubreddits, setSelectedSubreddits] = useState([]);
   const [activeSubreddit, setActiveSubreddit] = useState(null);
   const [postType, setPostType] = useState('hot');
-  const [managedPosts, setManagedPosts] = useState([]);
+  const { addManagedPost } = useAppContext();
 
   const searchSubreddits = async (term) => {
     const response = await fetch(`https://www.reddit.com/subreddits/search.json?q=${term}`);
@@ -42,12 +41,7 @@ const SubredditExplorer = () => {
   });
 
   const handlePostCheck = (post) => {
-    setManagedPosts((prevManagedPosts) => {
-      if (!prevManagedPosts.some(p => p.id === post.id)) {
-        return [...prevManagedPosts, post];
-      }
-      return prevManagedPosts;
-    });
+    addManagedPost(post);
   };
 
   const handleSearch = () => {

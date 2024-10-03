@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Loader2 } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { useAppContext } from '../context/AppContext';
 import PostTable from './PostTable';
 import { searchSubreddits, fetchSubredditPosts } from '../utils/redditApi';
+import { Card, CardContent } from '@/components/ui/card';
 
 const SubredditExplorer = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -43,7 +44,7 @@ const SubredditExplorer = () => {
   });
 
   const handlePostCheck = (post) => {
-    console.log('Adding post to managed posts:', post); // Add this line for debugging
+    console.log('Adding post to managed posts:', post);
     addManagedPost(post);
   };
 

@@ -5,9 +5,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowUp, Trash2, Star } from 'lucide-react';
 
 const CommentTable = ({ comments, selectedComments, onSelectComment, onRemoveComment }) => {
-  const shortenTitle = (title, maxLength = 30) => {
-    if (title.length <= maxLength) return title;
-    return title.substring(0, maxLength - 3) + '...';
+  const getPostTitle = (url) => {
+    const parts = url.split('/');
+    return parts[parts.length - 1].replace(/_/g, ' ');
   };
 
   return (
@@ -36,7 +36,7 @@ const CommentTable = ({ comments, selectedComments, onSelectComment, onRemoveCom
             <TableCell>{comment.subreddit}</TableCell>
             <TableCell>
               <a href={comment.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                {shortenTitle(comment.postTitle || 'Untitled Post')}
+                {getPostTitle(comment.url)}
               </a>
               {comment.isFromManagedPost && (
                 <Star className="inline-block ml-2 h-4 w-4 text-yellow-500" />

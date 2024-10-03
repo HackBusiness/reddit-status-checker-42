@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -6,18 +6,12 @@ import { RefreshCw, Trash2 } from 'lucide-react';
 import CommentTable from './CommentTable';
 import AddCommentDialog from './AddCommentDialog';
 import { toast } from 'sonner';
+import { useAppContext } from '../context/AppContext';
 
 const CommentTracker = () => {
   const [subredditFilter, setSubredditFilter] = useState('');
-  const [comments, setComments] = useState(() => {
-    const storedComments = localStorage.getItem('comments');
-    return storedComments ? JSON.parse(storedComments) : [];
-  });
   const [selectedComments, setSelectedComments] = useState([]);
-
-  useEffect(() => {
-    localStorage.setItem('comments', JSON.stringify(comments));
-  }, [comments]);
+  const { trackedComments, addTrackedComment, removeTrackedComment, isCommentFromManagedPost } = useAppContext();
 
   const parseRedditUrl = (url) => {
     const match = url.match(/\/r\/([^/]+)\/comments\/([^/]+)(?:\/[^/]+\/([^/]+))?/);
@@ -46,6 +40,7 @@ const CommentTracker = () => {
         upvotes: commentData.ups,
         organicTraffic: commentData.score,
         affiliateStatus: commentData.removed_by_category ? 'Removed' : 'Active',
+        isFromManagedPost: isCommentFromManagedPost(comment.url),
       };
     } catch (error) {
       console.error('Error fetching comment status:', error);
@@ -54,15 +49,15 @@ const CommentTracker = () => {
         upvotes: 0,
         organicTraffic: 0,
         affiliateStatus: 'Error',
+        isFromManagedPost: isCommentFromManagedPost(comment.url),
       };
     }
-  }, []);
+  }, [isCommentFromManagedPost]);
 
   const { refetch } = useQuery({
     queryKey: ['comments'],
     queryFn: async () => {
-      const updatedComments = await Promise.all(comments.map(fetchCommentStatus));
-      setComments(updatedComments);
+      const updatedComments = await Promise.all(trackedComments.map(fetchCommentStatus));
       return updatedComments;
     },
     enabled: false,
@@ -98,16 +93,16 @@ const CommentTracker = () => {
     };
 
     const updatedComment = await fetchCommentStatus(newCommentEntry);
-    setComments(prevComments => [...prevComments, updatedComment]);
+    addTrackedComment(updatedComment);
   };
 
   const handleRemoveComment = (commentId) => {
-    setComments(prevComments => prevComments.filter(comment => comment.id !== commentId));
+    removeTrackedComment(commentId);
     setSelectedComments(prevSelected => prevSelected.filter(id => id !== commentId));
   };
 
   const handleRemoveSelectedComments = () => {
-    setComments(prevComments => prevComments.filter(comment => !selectedComments.includes(comment.id)));
+    selectedComments.forEach(commentId => removeTrackedComment(commentId));
     setSelectedComments([]);
   };
 
@@ -119,7 +114,7 @@ const CommentTracker = () => {
     );
   };
 
-  const filteredComments = comments.filter(comment =>
+  const filteredComments = trackedComments.filter(comment =>
     comment.subreddit.toLowerCase().includes(subredditFilter.toLowerCase())
   );
 

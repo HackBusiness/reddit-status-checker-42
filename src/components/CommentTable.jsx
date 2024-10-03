@@ -2,7 +2,7 @@ import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { ArrowUp, Trash2 } from 'lucide-react';
+import { ArrowUp, Trash2, Star } from 'lucide-react';
 
 const CommentTable = ({ comments, selectedComments, onSelectComment, onRemoveComment }) => {
   return (
@@ -21,7 +21,7 @@ const CommentTable = ({ comments, selectedComments, onSelectComment, onRemoveCom
       </TableHeader>
       <TableBody>
         {comments.map((comment) => (
-          <TableRow key={comment.id}>
+          <TableRow key={comment.id} className={comment.isFromManagedPost ? 'bg-yellow-50' : ''}>
             <TableCell>
               <Checkbox
                 checked={selectedComments.includes(comment.id)}
@@ -34,6 +34,9 @@ const CommentTable = ({ comments, selectedComments, onSelectComment, onRemoveCom
               <a href={comment.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                 Link
               </a>
+              {comment.isFromManagedPost && (
+                <Star className="inline-block ml-2 h-4 w-4 text-yellow-500" />
+              )}
             </TableCell>
             <TableCell>{comment.organicTraffic} Views</TableCell>
             <TableCell className="flex items-center">

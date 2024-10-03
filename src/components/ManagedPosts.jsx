@@ -1,9 +1,14 @@
 import React from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAppContext } from '../context/AppContext';
+import { Link } from 'react-router-dom';
 
 const ManagedPosts = () => {
-  const { managedPosts } = useAppContext();
+  const { managedPosts, trackedComments } = useAppContext();
+
+  const getAssociatedComments = (postId) => {
+    return trackedComments.filter(comment => comment.url.includes(postId));
+  };
 
   return (
     <div className="p-4">
@@ -18,6 +23,7 @@ const ManagedPosts = () => {
               <TableHead>Score</TableHead>
               <TableHead>Comments</TableHead>
               <TableHead>Created</TableHead>
+              <TableHead>Associated Tracked Comments</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -38,6 +44,15 @@ const ManagedPosts = () => {
                 <TableCell>{post.score}</TableCell>
                 <TableCell>{post.num_comments}</TableCell>
                 <TableCell>{new Date(post.created_utc * 1000).toLocaleString()}</TableCell>
+                <TableCell>
+                  {getAssociatedComments(post.id).length > 0 ? (
+                    <Link to="/" className="text-blue-600 hover:underline">
+                      {getAssociatedComments(post.id).length} tracked comment(s)
+                    </Link>
+                  ) : (
+                    'No tracked comments'
+                  )}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

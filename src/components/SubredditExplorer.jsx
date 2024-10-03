@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -7,15 +7,30 @@ import { Loader2, X, Check } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { searchSubreddits, fetchSubredditPosts } from '../utils/redditApi';
+import { useAppContext } from '../context/AppContext';
 import PostTable from './PostTable';
 
 const SubredditExplorer = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSubreddits, setSelectedSubreddits] = useState([]);
-  const [activeSubreddit, setActiveSubreddit] = useState(null);
+  const [selectedSubreddits, setSelectedSubreddits] = useState(() => {
+    const saved = localStorage.getItem('selectedSubreddits');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [activeSubreddit, setActiveSubreddit] = useState(() => {
+    return localStorage.getItem('activeSubreddit') || null;
+  });
   const [postType, setPostType] = useState('hot');
-  const [managedPosts, setManagedPosts] = useState([]);
+  const { addManagedPost } = useAppContext();
+
+  useEffect(() => {
+    localStorage.setItem('selectedSubreddits', JSON.stringify(selectedSubreddits));
+  }, [selectedSubreddits]);
+
+  useEffect(() => {
+    if (activeSubreddit) {
+      localStorage.setItem('activeSubreddit', activeSubreddit);
+    }
+  }, [activeSubreddit]);
 
   const searchSubreddits = async (term) => {
     const response = await fetch(`https://www.reddit.com/subreddits/search.json?q=${term}`);
@@ -42,12 +57,7 @@ const SubredditExplorer = () => {
   });
 
   const handlePostCheck = (post) => {
-    setManagedPosts((prevManagedPosts) => {
-      if (!prevManagedPosts.some(p => p.id === post.id)) {
-        return [...prevManagedPosts, post];
-      }
-      return prevManagedPosts;
-    });
+    addManagedPost(post);
   };
 
   const handleSearch = () => {
